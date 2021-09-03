@@ -60,5 +60,51 @@ void findspace(int size, void *ptr, node_t *node) {
 }
 
 void myfree(void *ptr) {
+  if (head->next == 0) { //free list is empty
+    node_t *newnode;
+    int size = (ptr-sizeof(header_t))->size + sizeof(header_t) - sizeof(node_t);
+    newnode = ptr - sizeof(header_t);
+    newnode->size = size;
+    newnode->next = 0;
+    head->next = newnode;
+  }
+  else { //have to find where in free list this space goes
+    node_t *node = head;
+    //find its position by walking the list forward
+    while ((node->next != 0) && (node->next + node->next->size + sizeof(node_t) < ptr - sizeof(header_t))) {
+      node = node->next;
+    }
+    if (node->next == 0 && node + node->size + sizeof(node_t) != ptr - sizeof(header_t)) { // append to free list
+      node_t *newnode;
+      int size = (ptr-sizeof(header_t))->size + sizeof(header_t) - sizeof(node_t);
+      newnode = ptr - sizeof(header_t);
+      newnode->size = size;
+      newnode->next = 0;
+      node->next = newnode;
+    }
+    else if (node->next == 0) { // coalesce last node and new space
+      node->size = node->size + (ptr-sizeof(header_t))->size + sizeof(header_t);
+    }
+    else { //internal node in list
+      int coalesced = 0;
+      if (node->next + node->next->size + sizeof(node_t) == ptr - sizeof(header_t)) { //coalesce left
+        node->next->size = node->next->size + sizeof(header_t) + (ptr - sizeof(header_t))->size;
+        coalesced = 1;
+      }
+      if (node->next + node->next->size + sizeof(node_t) == node->next->next) { //coalesce right
+        node->next->size = node->next->size + sizeof(node_t) + node->next->next->size;
+        node->next->next = node->next->next->next;
+        coalesced = 1;
+      }
+      if (coalesced == 0) {
+        node_t *newnode;
+        int size = (ptr-sizeof(header_t))->size + sizeof(header_t) - sizeof(node_t);
+        newnode = ptr - sizeof(header_t);
+        newnode->size = size;
+        newnode->next = node->next->next;
+        node->next = newnode;
+      }
+    }
+  }
   return;
 }
