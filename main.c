@@ -19,7 +19,7 @@ int main() {
   node->next = 0;
 
   printf("Hed:  %p\n", head);
-  char *ptr = mymalloc(100);
+  char *ptr = (char *) mymalloc(100);
   printf("Ptr:  %p\n", ptr);
   char *ptr2 = mymalloc(100);
   printf("Ptr:  %p\n", ptr2);

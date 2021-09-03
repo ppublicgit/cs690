@@ -59,7 +59,7 @@ void findspace(int size, void *ptr, node_t *node) {
   return;
 }
 
-void myfree(void *ptr) {
+void myfree(void *ptr) {/*
   if (head->next == 0) { //free list is empty
     node_t *newnode;
     int size = (ptr-sizeof(header_t))->size + sizeof(header_t) - sizeof(node_t);
@@ -105,6 +105,6 @@ void myfree(void *ptr) {
         node->next = newnode;
       }
     }
-  }
+    }*/
   return;
 }

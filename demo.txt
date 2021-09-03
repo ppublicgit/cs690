@@ -1,0 +1,15 @@
+0  head size (head starts here)
+4  head next pointer
+8  ???
+12 ???
+16 header size
+20 header magic
+24 start allocated 100
+28
+...
+120 last 4 bytes for allocation
+124 head next node size (head next points here now)
+128 head next node next node
+132 ???
+136 ???
+140 freespace
