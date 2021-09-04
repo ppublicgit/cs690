@@ -4,7 +4,7 @@
 #include <sys/mman.h>
 
 node_t *head = 0;
-int heapsize = 4096;
+int heapsize = 8192*4;
 
 
 void *mymalloc(int size) {
@@ -45,22 +45,9 @@ void *findspace(int size, void *ptr, node_t *node) {
     // point current node->next to the remaining free space not used
     // by current allocation
     else {
-      if (size == 1028) {
-        printf("QWER\n");
-      }
       node_t *newnode = node->next + sizeof(node_t) + size;
       node->next->size = size;
-      if (size == 1028) {
-        printf("%d\n", tempsize);
-        printf("%p\t%d\n", node, node->size);
-        printf("%p\t%d\n", node->next, node->next->size);
-        printf("%p\n", node->next + node->next->size + sizeof(node_t));
-        printf("%p\n", newnode);
-        newnode->size = 0;
-        printf("%d\n", newnode->size);
-      }
       newnode->size = tempsize - size - sizeof(node_t);
-
       newnode->next = tempnode;
       node->next = newnode;
 
@@ -69,9 +56,6 @@ void *findspace(int size, void *ptr, node_t *node) {
   // iterate to next node to see if it fits there
   else {
     ptr = findspace(size, ptr, node->next);
-  }
-  if (size == 1028) {
-    printf("ASDF\n");
   }
   return ptr;
 }

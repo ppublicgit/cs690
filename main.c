@@ -22,8 +22,7 @@ int main() {
   printFreeList();
 
   printf("Mixed...\n");
-  int *ptrBig = (int *) mymalloc(48);
-  printf("Here\n");
+  int *ptrBig = (int *) mymalloc(1028);
   printFreeList();
   myfree(ptr);
   printFreeList();
