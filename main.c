@@ -3,12 +3,22 @@
 
 int main() {
   printf("Starting...\n");
-  char *ptr = (char *) mymalloc(8);
-  printf("Ptr:  %p\n", ptr);
-  char *ptr2 = mymalloc(8);
-  printf("Ptr:  %p\n", ptr2);
-  char *ptr3 = mymalloc(4000);
-  printf("Ptr:  %p\n", ptr3);
+  printf("Allocating...\n");
+  printFreeList();
+  int *ptr = (int *) mymalloc(8);
+  printFreeList();
+  double *ptr2 = (double *) mymalloc(16);
+  printFreeList();
+  char *ptr3 = (char *) mymalloc(32);
+  printFreeList();
+
+  printf("Freeing...\n");
+  myfree(ptr);
+  printFreeList();
+  myfree(ptr2);
+  printFreeList();
+  myfree(ptr3);
+  printFreeList();
   printf("Exiting...");
   return 0;
 }
