@@ -87,15 +87,12 @@ void myfree(void *ptr) {
     else {
       node->next = (node_t *)(ptr) - sizeof(node_t);
       node = node->next;
+      node->next = tempnode;
     }
     // right coalesce
     if (node->next == node->size + node + sizeof(node_t)) {
       node->size = node->size + sizeof(node_t) + node->next->size;
       node->next = node->next->next;
-    }
-    // insert before next node (dont right coalesce)
-    else {
-      node->next = tempnode;
     }
   }
   return;
