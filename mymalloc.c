@@ -4,22 +4,22 @@
 #include <sys/mman.h>
 
 node_t *head = 0;
+int heapsize = 4096;
 
 
 void *mymalloc(int size) {
   // Initialize heap if it is the first call to mymalloc
   if (head == 0) {
     // alllocate our heap space
-    head = mmap(0, 4096, PROT_READ|PROT_WRITE,
+    head = mmap(0, heapsize, PROT_READ|PROT_WRITE,
                 MAP_ANON|MAP_PRIVATE, -1, 0);
     // create a dummy head node
-    head->size = 4096 - sizeof(node_t);
+    head->size = heapsize - sizeof(node_t);
     // create the first node in our free list that has all the remaining space
     node_t *node = head + sizeof(node_t);
-    node->size = 4096 - sizeof(node_t) - sizeof(node_t);
+    node->size = heapsize - sizeof(node_t) - sizeof(node_t);
     head->next = node;
     node->next = 0;
-    printf("Hed:  %p\n", head);
   }
 
   // create our pointer to return
@@ -59,53 +59,70 @@ void *findspace(int size, void *ptr, node_t *node) {
   return ptr;
 }
 
-void myfree(void *ptr) {/*
-  if (head->next == 0) { //free list is empty
-    node_t *newnode;
-    int size = (ptr-sizeof(header_t))->size + sizeof(header_t) - sizeof(node_t);
-    newnode = ptr - sizeof(header_t);
-    newnode->size = size;
-    newnode->next = 0;
-    head->next = newnode;
+void myfree(void *ptr) {
+  // pointer is not from our heap
+  if ((node_t *)(ptr) < head || (node_t *)(ptr) > head + heapsize) {
+    ;
   }
-  else { //have to find where in free list this space goes
+  // free list is empty
+  else if (head->next == 0) {
+    head->next = (node_t *)(ptr) - sizeof(node_t);
+    head->next->next  = 0;
+  }
+  //find where our node belongs in the freelist
+  else {
     node_t *node = head;
+    int size = ((node_t *)(ptr) - sizeof(node_t))->size;
+    node_t *tempnode;
     //find its position by walking the list forward
-    while ((node->next != 0) && (node->next + node->next->size + sizeof(node_t) < ptr - sizeof(header_t))) {
+    while (node->next != 0 && node->next + sizeof(node_t) < (node_t *)(ptr)) {
       node = node->next;
     }
-    if (node->next == 0 && node + node->size + sizeof(node_t) != ptr - sizeof(header_t)) { // append to free list
-      node_t *newnode;
-      int size = (header_t*)(ptr-sizeof(header_t))->size + sizeof(header_t) - sizeof(node_t);
-      newnode = ptr - sizeof(header_t);
-      newnode->size = size;
-      newnode->next = 0;
-      node->next = newnode;
+    tempnode = node->next;
+    // left coalesce
+    if (node != head && node + node->size + sizeof(node_t) + sizeof(node_t) == (node_t *)(ptr)) {
+      node->size = node->size + sizeof(node_t) + size;
     }
-    else if (node->next == 0) { // coalesce last node and new space
-      node->size = node->size + (ptr-sizeof(header_t))->size + sizeof(header_t);
+    // insert a node after current node (dont left coalesce)
+    else {
+      node->next = (node_t *)(ptr) - sizeof(node_t);
+      node = node->next;
     }
-    else { //internal node in list
-      int coalesced = 0;
-      if (node->next + node->next->size + sizeof(node_t) == ptr - sizeof(header_t)) { //coalesce left
-        node->next->size = node->next->size + sizeof(header_t) + (ptr - sizeof(header_t))->size;
-        coalesced = 1;
-      }
-      if (node->next + node->next->size + sizeof(node_t) == node->next->next) { //coalesce right
-        node->next->size = node->next->size + sizeof(node_t) + node->next->next->size;
-        node->next->next = node->next->next->next;
-        coalesced = 1;
-      }
-      if (coalesced == 0) {
-        node_t *newnode;
-        int size = (ptr-sizeof(header_t))->size + sizeof(header_t) - sizeof(node_t);
-        newnode = ptr - sizeof(header_t);
-        newnode->size = size;
-        newnode->next = node->next->next;
-        node->next = newnode;
-      }
+    // right coalesce
+    if (node->next == node->size + node + sizeof(node_t)) {
+      node->size = node->size + sizeof(node_t) + node->next->size;
+      node->next = node->next->next;
+    }
+    // insert before next node (dont right coalesce)
+    else {
+      node->next = tempnode;
     }
   }
-                        */
+  return;
+}
+
+// Print the free list
+void printFreeList() {
+  printf("Printing Free List:\n");
+  // check that we have allocated a heap
+  if (head == 0) {
+    printf("Head not allocated as no call to mymalloc yet\n\n");
+    return;
+  }
+  // print head of heap
+  printf("Head  : %p\n", head);
+  node_t *node = head->next;
+  int count = 0;
+  // check for empty list
+  if (node == 0) {
+    printf("Empty Free List\n");
+  }
+  // print info for each node in the free list
+  while (node != 0) {
+    printf("Node %d: %p\tSize = %d\n", count, node, node->size);
+    node = node->next;
+    count++;
+  }
+  printf("\n\n");
   return;
 }
