@@ -7,64 +7,56 @@ node_t *head = 0;
 
 
 void *mymalloc(int size) {
+  // Initialize heap if it is the first call to mymalloc
   if (head == 0) {
+    // alllocate our heap space
     head = mmap(0, 4096, PROT_READ|PROT_WRITE,
                 MAP_ANON|MAP_PRIVATE, -1, 0);
+    // create a dummy head node
     head->size = 4096 - sizeof(node_t);
+    // create the first node in our free list that has all the remaining space
     node_t *node = head + sizeof(node_t);
     node->size = 4096 - sizeof(node_t) - sizeof(node_t);
     head->next = node;
     node->next = 0;
     printf("Hed:  %p\n", head);
   }
-  void *ptr = 0;
 
-  if (head->next == 0) {
-    return ptr;
-  }
-  else if (head->next->size >= size + sizeof(node_t)) {
-    int tempsize = head->next->size;
-    node_t *tempnode = head->next->next;
-    ptr = head->next + sizeof(node_t);
-    if (tempsize <= size + sizeof(node_t) + sizeof(node_t)) {
-      head->next = tempnode;
-    }
-    else {
-      node_t *node = head->next + sizeof(node_t) + size;
-      node->size = tempsize - size - sizeof(node_t);
-      node->next = tempnode;
-      head->next = node;
-    }
-  }
-  else {
-    findspace(size, ptr, head->next);
-  }
+  // create our pointer to return
+  void *ptr;
 
-  return ptr;
+  return findspace(size, ptr, head);
 }
 
-void findspace(int size, void *ptr, node_t *node) {
+void *findspace(int size, void *ptr, node_t *node) {
+  //if no next pointer, allocation does not fit
   if (node->next == 0) {
-    ;
+    ptr = 0;
   }
+  //if allocation fits in next node than use that node
   else if (node->next->size >= size + sizeof(node_t)) {
     int tempsize = node->next->size;
     node_t *tempnode = node->next->next;
     ptr = node->next + sizeof(node_t);
-    if (tempsize <= size + sizeof(node_t) +sizeof(node_t)) {
+    // if allocation uses up all space then remove node from freelist
+    if (tempsize <= size + sizeof(node_t) + sizeof(node_t)) {
       node->next = tempnode;
     }
+    // point current node->next to the remaining free space not used
+    // by current allocation
     else {
       node_t *newnode = node->next + sizeof(node_t) + size;
+      node->next->size = size;
       newnode->size = tempsize - size - sizeof(node_t);
       newnode->next = tempnode;
       head->next = newnode;
     }
   }
+  // iterate to next node to see if it fits there
   else {
-    findspace(size, ptr, node->next);
+    ptr = findspace(size, ptr, node->next);
   }
-  return;
+  return ptr;
 }
 
 void myfree(void *ptr) {/*
@@ -113,6 +105,7 @@ void myfree(void *ptr) {/*
         node->next = newnode;
       }
     }
-    }*/
+  }
+                        */
   return;
 }
