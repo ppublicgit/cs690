@@ -3,11 +3,6 @@ void *mymalloc(int size);
 
 void myfree(void *ptr);
 
-typedef struct {
-  int size;
-  int magic;
-} header_t;
-
 
 typedef struct __node_t {
   int size;

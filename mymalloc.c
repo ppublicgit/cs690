@@ -1,30 +1,39 @@
 #include "mymalloc.h"
 
 #include <stdio.h>
+#include <sys/mman.h>
 
-extern node_t *head;
-extern int magic;
+node_t *head = 0;
 
 
 void *mymalloc(int size) {
+  if (head == 0) {
+    head = mmap(0, 4096, PROT_READ|PROT_WRITE,
+                MAP_ANON|MAP_PRIVATE, -1, 0);
+    head->size = 4096 - sizeof(node_t);
+    node_t *node = head + sizeof(node_t);
+    node->size = 4096 - sizeof(node_t) - sizeof(node_t);
+    head->next = node;
+    node->next = 0;
+    printf("Hed:  %p\n", head);
+  }
   void *ptr = 0;
 
   if (head->next == 0) {
     return ptr;
   }
-  else if (head->next->size >= size + sizeof(header_t)) {
+  else if (head->next->size >= size + sizeof(node_t)) {
     int tempsize = head->next->size;
     node_t *tempnode = head->next->next;
-    header_t *header = head->next;
-    header->size = size;
-    header->magic = ++magic;
-    ptr = head->next + sizeof(header_t);
-    if (tempsize == size + sizeof(header_t)) {
+    ptr = head->next + sizeof(node_t);
+    if (tempsize <= size + sizeof(node_t) + sizeof(node_t)) {
       head->next = tempnode;
     }
     else {
-      head->next = head->next + sizeof(header_t) + size;
-      head->next->size = tempsize - size - sizeof(header_t);
+      node_t *node = head->next + sizeof(node_t) + size;
+      node->size = tempsize - size - sizeof(node_t);
+      node->next = tempnode;
+      head->next = node;
     }
   }
   else {
@@ -36,21 +45,20 @@ void *mymalloc(int size) {
 
 void findspace(int size, void *ptr, node_t *node) {
   if (node->next == 0) {
-    return;
+    ;
   }
-  if (node->next->size >= size + sizeof(header_t)) {
+  else if (node->next->size >= size + sizeof(node_t)) {
     int tempsize = node->next->size;
     node_t *tempnode = node->next->next;
-    header_t *header = node->next;
-    header->size = size;
-    header->magic = ++magic;
-    ptr = node->next + sizeof(header_t);
-    if (tempsize == size + sizeof(header_t)) {
+    ptr = node->next + sizeof(node_t);
+    if (tempsize <= size + sizeof(node_t) +sizeof(node_t)) {
       node->next = tempnode;
     }
     else {
-      node->next = node->next + sizeof(header_t) + size;
-      node->next->size = tempsize - size - sizeof(header_t);
+      node_t *newnode = node->next + sizeof(node_t) + size;
+      newnode->size = tempsize - size - sizeof(node_t);
+      newnode->next = tempnode;
+      head->next = newnode;
     }
   }
   else {
@@ -76,7 +84,7 @@ void myfree(void *ptr) {/*
     }
     if (node->next == 0 && node + node->size + sizeof(node_t) != ptr - sizeof(header_t)) { // append to free list
       node_t *newnode;
-      int size = (ptr-sizeof(header_t))->size + sizeof(header_t) - sizeof(node_t);
+      int size = (header_t*)(ptr-sizeof(header_t))->size + sizeof(header_t) - sizeof(node_t);
       newnode = ptr - sizeof(header_t);
       newnode->size = size;
       newnode->next = 0;
